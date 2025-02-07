@@ -13,7 +13,7 @@ class Users(Base):
   hashed_password=Column(String,nullable=False)
   username=Column(String,nullable=False,unique=True)
   role = Column(String, nullable=False)
-  projects=Column(Boolean,default=False)
+  project=Column(Integer,default=None,nullable=True)
   is_active = Column(Boolean, default=False)
   verification_token = Column(String, nullable=True)
   created_at=Column(Date, default=datetime.now)

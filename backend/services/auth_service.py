@@ -9,11 +9,11 @@ from ..models.users_models import Users
 from ..dependencies import SECRET_KEY,ALGORITHM,EMAIL_PASSWORD,EMAIL_ADDRESS,logger
 
 from fastapi import Depends,HTTPException,status
-from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer
 
 from passlib.context import CryptContext
 from jose import jwt,JWTError
-from dotenv import load_dotenv
+
 
 from email.message import EmailMessage
 
@@ -26,6 +26,37 @@ oauth2_bearer=OAuth2PasswordBearer(tokenUrl='auth/token')
 
 bcrypt_context=CryptContext(schemes=['bcrypt'],deprecated='auto')
 
+IT_POSITIONS = [
+   "Software Engineer",
+   "Frontend Developer",
+   "Backend Developer",
+   "Full Stack Developer",
+   "DevOps Engineer",
+   "QA Engineer",
+   "Automation Tester",
+   "Data Scientist",
+   "Data Analyst",
+   "Machine Learning Engineer",
+   "AI Engineer",
+   "Cloud Engineer",
+   "Cybersecurity Specialist",
+   "System Administrator",
+   "Database Administrator",
+   "Product Manager",
+   "Project Manager",
+   "UI/UX Designer",
+   "Business Analyst",
+   "Scrum Master",
+   "Technical Support Engineer",
+   "Embedded Software Engineer",
+   "Game Developer",
+   "Mobile Developer (iOS/Android)",
+   "Site Reliability Engineer (SRE)",
+   "Blockchain Developer",
+   "Network Engineer",
+   "IT Consultant",
+   "Technical Writer"
+   ]
 
 def authenticate_user(email:str,password:str,db):
    user=db.query(Users).filter(Users.email==email).first()
@@ -34,12 +65,12 @@ def authenticate_user(email:str,password:str,db):
    return user
 
 
-def create_access_token(email: str, id: str,role:str,is_active:bool,projects:bool, expires_delta: timedelta):
+def create_access_token(email: str, id: str,role:str,is_active:bool, expires_delta: timedelta):
    encode={
       'sub': email,
       'id': id,
-      'role':role,
-      'projects':projects,
+      'role':role.strip(),
+
       'status':is_active
       }
    expires=datetime.utcnow() + expires_delta
@@ -53,13 +84,14 @@ async def get_current_user(token:Annotated[str,Depends(oauth2_bearer)]):
       email=payload.get('sub')
       id=payload.get('id')
       role=payload.get('role')
+      logger.info(f"Email: {email}, id : {id}, role : {role}")
       projects=payload.get('projects')
       is_active=payload.get('status')
       if email is None or id is None :
          logger.info(f"Email: {email}, id : {id}, is_active : {is_active}")
          logger.warning("Invalid token payload")
          raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='Could not validate user')
-      return{'email':email, 'id':id,'user_role':role,'projects':projects}
+      return{'email':email, 'id':id,'role':role,'projects':projects}
    except JWTError:
       raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='Token expired')
 
@@ -78,3 +110,9 @@ def send_verification_email(email: str, token: str):
    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
       smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
       smtp.send_message(msg)
+
+def check_positions(position):
+   if position in IT_POSITIONS:
+      return True
+   else: 
+      raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,detail="Invalid position")

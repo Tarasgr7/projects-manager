@@ -44,25 +44,30 @@ async def register_user(user: UsersSchema, db: db_dependency, background_tasks: 
         logger.warning("Email вже зареєстрований")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail='Email already registered')
-    
-    token = str(uuid.uuid4())
-    create_user = Users(
-        email=user.email,
-        hashed_password=bcrypt_context.hash(user.password),
-        first_name=user.first_name,
-        last_name=user.last_name,
-        username=user.username,
-        role=user.role,
-        is_active=False,
-        verification_token=token
-    )
-    
-    db.add(create_user)
-    db.commit()
-    logger.info(f"Користувача {user.email} зареєстровано успішно")
-    
-    background_tasks.add_task(send_verification_email, user.email, token)
-    return {"message": "User registered. Check your email for verification."}
+    positions=check_positions(user.role)
+    if  positions:
+        logger.info('Користувач ввів вірну позицію')
+        token = str(uuid.uuid4())
+        create_user = Users(
+            email=user.email,
+            hashed_password=bcrypt_context.hash(user.password),
+            first_name=user.first_name,
+            last_name=user.last_name,
+            username=user.username,
+            role=user.role,
+            is_active=False,
+            verification_token=token
+        )
+        
+        db.add(create_user)
+        db.commit()
+        logger.info(f"Користувача {user.email} зареєстровано успішно")
+        
+        background_tasks.add_task(send_verification_email, user.email, token)
+        return {"message": "User registered. Check your email for verification."}
+    else:
+        logger.warning("Невірна позиція користувача")
+        return positions
 
 
 @router.post("/token", response_model=Token)
@@ -79,7 +84,6 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         user.email,
         user.id,
         user.role,
-        user.projects,
         user.is_active,
         timedelta(minutes=20)
     )
@@ -110,5 +114,5 @@ async def verify_email(token: str, db: db_dependency):
 
 @router.get("/user_info",status_code=status.HTTP_200_OK)
 async def get_user_info(user: user_dependency):
-    logger.info(f"Отримання ��нформаці�� про користувача: {user['email']}")
+    logger.info(f"Отримання інформації про користувача: {user['email']}")
     return user
