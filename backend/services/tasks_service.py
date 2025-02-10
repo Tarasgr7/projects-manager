@@ -1,14 +1,10 @@
-from fastapi import status, HTTPException
+from fastapi import status
 from ..models.tasks_model import Tasks
 from ..dependencies import logger
-from ..services.projects_service import is_pm_for_project
 from .utils import raise_error
-from ..models.users_models import Users
-from ..models.projects_model import Projects
-from ..models.employee_model import Employee
 from ..models.tasks_model import Tasks
 from ..services.tasks_service import *
-from enum import Enum
+
 
 
 def check_user_tasks_by_user_id(user_id,db):
@@ -32,3 +28,34 @@ def get_task_by_id(task_id,db):
     raise_error(f"Завдання з id={task_id} не знайдено", status.HTTP_404_NOT_FOUND)
   return task
 
+
+def get_all_tasks_for_project(project_id,db):
+  tasks = db.query(Tasks).filter(Tasks.project_id == project_id).all()
+  if not tasks:
+    raise_error(f"Завдань не знайдено для проекту з id={project_id}", status.HTTP_404_NOT_FOUND)
+  return tasks
+
+def unfulfilled_tasks_for_project(project_id,db):
+  tasks = db.query(Tasks).filter(Tasks.project_id == project_id, Tasks.status == False).all()
+  
+  if not tasks:
+    raise_error(f"Завдань не знайдено для проекту з id={project_id}, не виконаних", status.HTTP_404_NOT_FOUND)
+  return tasks
+
+def get_all_tasks_for_employee(employee_id,db):
+  tasks=db.query(Tasks).filter(Tasks.employee_id==employee_id).all()
+  if not tasks:
+    raise_error(f"Завдань не знайдено для юзера з id={employee_id}", status.HTTP_404_NOT_FOUND)
+  return tasks
+
+def get_unfulfilled_tasks_for_employee(employee_id,db):
+  tasks=db.query(Tasks).filter(Tasks.employee_id==employee_id, Tasks.status==False).all()
+  if not tasks:
+    raise_error(f"Не виконаних завдань не знайдено для юзера з id={employee_id}", status.HTTP_404_NOT_FOUND)
+  return tasks
+
+def have_unfulfilled_tasks(user_id,db):
+  tasks = db.query(Tasks).filter(Tasks.employee_id == user_id, Tasks.status == False).first()
+  if tasks:
+    return True
+  return False

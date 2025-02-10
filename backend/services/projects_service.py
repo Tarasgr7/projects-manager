@@ -1,6 +1,6 @@
 from ..models.projects_model import Projects
 from ..models.users_models import Users
-from fastapi import status,HTTPException
+from fastapi import status
 from ..dependencies import  logger
 from .utils import raise_error
 
@@ -11,8 +11,6 @@ def is_pm_for_project(projects_id:int, pm_id:int,db):
     return False
   return True
 
-
-#Виведення Помилок
 
 
 

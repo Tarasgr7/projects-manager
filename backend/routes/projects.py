@@ -1,9 +1,9 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status
 from ..dependencies import logger
 from ..services.utils import user_dependency, db_dependency
 from ..services.projects_service import *
 from ..models.projects_model import Projects
-from ..models.employee_model import Employee
+from ..services.tasks_service import have_unfulfilled_tasks
 from ..models.users_models import Users
 from ..schemas.project_schemas import ProjectSchema
 from ..schemas.employee_schemas import EmployeeSchema
@@ -94,23 +94,27 @@ async def add_employee(employee: EmployeeSchema, db: db_dependency, pm: user_dep
 
     logger.info(f"Працівник {user.username} доданий до проекту ID:{employee.project_id}")
 
-@router.delete("/delete_employee", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/delete_employee", status_code=status.HTTP_200_OK)
 async def delete_employee(employee: EmployeeSchema, db: db_dependency, pm: user_dependency):
     check_user_pm(pm)
     check_project_exists(employee.project_id,db)
     if not is_pm_for_project(employee.project_id, pm.get("id"), db):
         raise_error("Ви не є PM проекту", status.HTTP_403_FORBIDDEN)
     user=get_user_by_id(employee.user_id,db)
+    if  have_unfulfilled_tasks(employee.user_id,db):
+        logger.warning("Користувач має невиконані завдання. Змініть виконавця цих завдань, або видаліть їх. ")
+        raise_error("Користувач має невиконані завдання. Змініть виконавця цих завдань, або видаліть їх.", status.HTTP_409_CONFLICT)
     if user:
         user.project = None
     db.commit()
 
     logger.info(f"Працівник {user.username} видалений з проекту {employee.project_id}")
+    return {"message":f"Працівник {user.username} видалений з проекту {employee.project_id}"}
 
 @router.get("/get_employees_by_project/{project_id}", status_code=status.HTTP_200_OK)
 async def get_employees_by_project(project_id: int, db: db_dependency, pm: user_dependency):
     check_user_pm(pm)
     check_project_exists(project_id,db)
     employees=get_employee_by_project_id(project_id,db)
-    logger.info(f"Отримання працівників для проекту {project_id}")
+    logger.info(f"Отримання працівників, які працюють над проектом : {project_id}")
     return employees
