@@ -13,14 +13,13 @@ ALGORITHM = os.getenv("ALGORITHM")
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("service")
 
+# Отримуємо URL бази даних із .env (або ставимо дефолтне значення)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-SQLALCHEMY_DATABASE_URL = 'sqlite:///projects_manager.db'
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={'check_same_thread': False})
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

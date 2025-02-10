@@ -1,4 +1,8 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status,Depends
+from time import time
+import json
+import redis
+from ..services.redis_client import get_redis
 from ..models.tasks_model import Tasks
 from ..models.comments_model import Comments
 from ..dependencies import logger
@@ -58,13 +62,54 @@ async def delete_task(task_id: int, db: db_dependency, pm: user_dependency):
       raise_error("Ви не є PM даного проекту", status.HTTP_403_FORBIDDEN)
 
 #Отримання tasks
+@router.get("/all_tasks_for_projects/{project_id}", status_code=status.HTTP_200_OK)
+async def all_tasks_for_projects(
+    project_id: int, 
+    db: db_dependency, 
+    pm: user_dependency, 
+    redis_client: redis.Redis = Depends(get_redis)  # Використання змінної для залежності Redis
+):
+    if is_pm_for_project(project_id,pm.get("id"),db)==False:
+        raise_error("Ви не є PM проекту", status.HTTP_403_FORBIDDEN)
+    start_time = time()  # Початок вимірювання часу
+    logger.info(f"Отримання списку завдань для проекту {project_id}")
 
-@router.get("/all_tasks_for_projects/{project_id}",status_code=status.HTTP_200_OK)
-async def all_tasks_for_projects(project_id: int, db: db_dependency, pm: user_dependency):
-    check_project_exists(project_id, db)
-    tasks = get_all_tasks_for_project(project_id, db)
-    logger.info("Tasks was successfully found")
+    # Генеруємо унікальний ключ кешу для кожного користувача та проєкту
+    cache_key = f"tasks_project_{project_id}_user_{pm.get('id')}"
+
+    # Перевіряємо, чи є дані в кеші Redis
+    cached_data = await redis_client.get(cache_key)
+    
+    if cached_data:
+        logger.info("✅ Дані взяті з кешу Redis")
+        tasks = json.loads(cached_data)
+    else:
+        logger.info("⏳ Даних у кеші немає, виконуємо запит до БД")
+        
+        # Перевіряємо існування проекту
+        check_project_exists(project_id, db)
+        
+        # Отримуємо список завдань з БД
+        tasks = get_all_tasks_for_project(project_id, db)
+        logger.info(f"Знайдено {len(tasks)} завдань")
+
+        # Перетворюємо дані у формат JSON і зберігаємо в кеш Redis на 180 секунд
+        tasks_data = [{"id": t.id, "title": t.title, "status": t.status} for t in tasks]
+        await redis_client.set(cache_key, json.dumps(tasks_data), ex=180)
+        logger.info(f"✅ Додано в кеш Redis на 180 секунд: {len(tasks)} завдань")
+
     return tasks
+
+
+
+
+
+# @router.get("/all_tasks_for_projects/{project_id}",status_code=status.HTTP_200_OK)
+# async def all_tasks_for_projects(project_id: int, db: db_dependency, pm: user_dependency):
+#     check_project_exists(project_id, db)
+#     tasks = get_all_tasks_for_project(project_id, db)
+#     logger.info("Tasks was successfully found")
+#     return tasks
 
 @router.get('/get_unfulfilled_tasks_for_project/{project_id}',status_code=status.HTTP_200_OK)
 async def get_unfulfilled_tasks_for_project(project_id: int, db: db_dependency, pm: user_dependency):
@@ -80,13 +125,40 @@ async def get_unfulfilled_tasks_for_project(project_id: int, db: db_dependency, 
 
 
 
-@router.get("/check_task_for_user/{user_id}",status_code=status.HTTP_200_OK)
-async def check_task_for_user(user_id: int, db: db_dependency, user: user_dependency):
-  check_user_exists(user_id, db)
-  tasks_owner_or_pm(user,user_id,db)
-  tasks = get_all_tasks_for_employee(user_id, db)
-  logger.info("Tasks was successfully found")
-  return tasks
+@router.get("/check_task_for_user/{user_id}", status_code=status.HTTP_200_OK)
+async def check_task_for_user(
+    user_id: int, 
+    db: db_dependency, 
+    user: user_dependency, 
+    redis_client: redis.Redis = Depends(get_redis)  # Використання Redis для кешування
+):
+    # Генеруємо унікальний ключ кешу для кожного користувача
+    cache_key = f"tasks_user_{user_id}"
+
+    # Перевіряємо, чи є дані в кеші Redis
+    cached_data = await redis_client.get(cache_key)
+    
+    if cached_data:
+        logger.info("✅ Дані взяті з кешу Redis")
+        tasks = json.loads(cached_data)
+    else:
+        logger.info("⏳ Даних у кеші немає, виконуємо запит до БД")
+
+        # Перевіряємо існування користувача
+        check_user_exists(user_id, db)
+        tasks_owner_or_pm(user, user_id, db)
+
+        # Отримуємо список завдань для користувача з БД
+        tasks = get_all_tasks_for_employee(user_id, db)
+        logger.info(f"Знайдено {len(tasks)} завдань для користувача")
+
+        # Перетворюємо дані у формат JSON і зберігаємо в кеш Redis на 180 секунд
+        tasks_data = [{"id": t.id, "title": t.title, "status": t.status} for t in tasks]
+        await redis_client.set(cache_key, json.dumps(tasks_data), ex=180)
+        logger.info(f"✅ Додано в кеш Redis на 180 секунд: {len(tasks)} завдань")
+
+    return tasks
+
 
 
 @router.get("/unfulfilled_tasks_for_employee/{user_id}",status_code=status.HTTP_200_OK)
@@ -106,32 +178,3 @@ async def get_task(task_id: int, db: db_dependency,pm:user_dependency):
     tasks_owner_or_pm(pm,task.employee_id,db)
     return task
 
-@router.post("/add_comment_for_task/{task_id}",status_code=status.HTTP_201_CREATED)
-async def add_comment_for_task(task_id:int,comment:CommentSchema,db:db_dependency,user: user_dependency):
-    check_task_exists(task_id, db)
-    task = get_task_by_id(task_id, db)
-    tasks_owner_or_pm(user,task.employee_id,db)
-    new_comment = Comments(content=comment.content, task_id=task_id, user_id=user.get('id'))
-    db.add(new_comment)
-    db.commit()
-    return new_comment
-
-@router.get("/get_comments_for_task/{task_id}",status_code=status.HTTP_200_OK)
-async def get_comments_for_task(task_id: int, db: db_dependency, user: user_dependency):
-    check_task_exists(task_id, db)
-    task = get_task_by_id(task_id, db)
-    tasks_owner_or_pm(user,task.employee_id,db)
-    comments = comments_for_task(task_id, db)
-    if not comments:
-        raise_error("Коментарів для цієї задачі немає", status.HTTP_404_NOT_FOUND)
-    logger.info("Comments was successfully found")
-    return comments
-
-@router.delete('/delete_comments/{comment_id}',status_code=status.HTTP_200_OK)
-async def delete_comment(comment_id: int, db: db_dependency, user: user_dependency):
-    comment = get_comment_by_id(comment_id, db)
-    tasks_owner_or_pm(user,comment.user_id,db)
-    db.delete(comment)
-    db.commit()
-    logger.info(f"Коментар з ID {comment_id} успішно видален")
-    return {"message": "Коментар успішно видален"}

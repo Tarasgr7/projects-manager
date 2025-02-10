@@ -84,11 +84,10 @@ async def get_current_user(token:Annotated[str,Depends(oauth2_bearer)]):
       email=payload.get('sub')
       id=payload.get('id')
       role=payload.get('role')
-      logger.info(f"Email: {email}, id : {id}, role : {role}")
       projects=payload.get('projects')
       is_active=payload.get('status')
       if email is None or id is None :
-         logger.info(f"Email: {email}, id : {id}, is_active : {is_active}")
+         logger.error(f"Email: {email}, id : {id}, is_active : {is_active}")
          logger.warning("Invalid token payload")
          raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='Could not validate user')
       return{'email':email, 'id':id,'role':role,'projects':projects}
