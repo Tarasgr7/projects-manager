@@ -11,6 +11,7 @@ from ..services.tasks_service import have_unfulfilled_tasks
 from ..models.users_models import Users
 from ..schemas.project_schemas import ProjectSchema
 from ..schemas.employee_schemas import EmployeeSchema
+
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
@@ -93,11 +94,7 @@ async def get_projects(
     return projects
 
 
-# @router.get("/get_all_projects", status_code=status.HTTP_200_OK)
-# async def get_projects(db: db_dependency, user: user_dependency):
-#     check_user_pm(user)
-#     logger.info(f"Перегляд списку проектів для {user.get('email')}")
-#     return db.query(Projects).all()
+
 
 @router.get("/projects_by_pm", status_code=status.HTTP_200_OK)
 async def get_projects_by_pm(db: db_dependency, user: user_dependency):
@@ -184,14 +181,5 @@ async def get_employees_by_project(
 
     return employees
 
-
-
-# @router.get("/get_employees_by_project/{project_id}", status_code=status.HTTP_200_OK)
-# async def get_employees_by_project(project_id: int, db: db_dependency, pm: user_dependency):
-#     check_user_pm(pm)
-#     check_project_exists(project_id,db)
-#     employees=get_employee_by_project_id(project_id,db)
-#     logger.info(f"Отримання працівників, які працюють над проектом : {project_id}")
-#     return employees
 
 

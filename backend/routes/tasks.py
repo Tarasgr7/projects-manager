@@ -104,12 +104,6 @@ async def all_tasks_for_projects(
 
 
 
-# @router.get("/all_tasks_for_projects/{project_id}",status_code=status.HTTP_200_OK)
-# async def all_tasks_for_projects(project_id: int, db: db_dependency, pm: user_dependency):
-#     check_project_exists(project_id, db)
-#     tasks = get_all_tasks_for_project(project_id, db)
-#     logger.info("Tasks was successfully found")
-#     return tasks
 
 @router.get('/get_unfulfilled_tasks_for_project/{project_id}',status_code=status.HTTP_200_OK)
 async def get_unfulfilled_tasks_for_project(project_id: int, db: db_dependency, pm: user_dependency):
