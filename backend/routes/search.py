@@ -3,7 +3,7 @@ from ..services.utils import db_dependency,user_dependency
 from ..models.users_models import Users, Steaks, Language
 from typing import List
 
-router = APIRouter(prefix="/projects", tags=["projects"])
+router = APIRouter(prefix="/search", tags=["search"])
 
 # 1. Отримання усієї інформації про користувача за user_id
 @router.get("/all_info_about_user/{user_id}",status_code=status.HTTP_200_OK)

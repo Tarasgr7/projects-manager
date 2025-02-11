@@ -18,7 +18,7 @@ def is_pm_for_project(projects_id:int, pm_id:int,db):
 def check_project_exists(project_id,db):
     project=db.query(Projects).filter(Projects.id==project_id).first()
     if not project:
-        logger.error("Project is not found",project_id)
+        logger.error(f"Project is not found: {project_id}")
         raise_error("Проект з таким ID не знайдений", status.HTTP_404_NOT_FOUND)
 
 

@@ -20,7 +20,6 @@ class Users(Base):
   updated_at=Column(Date, default=datetime.now,onupdate=datetime.now)
   
   projects = relationship("Projects",back_populates='users', passive_deletes=True)
-  employee = relationship("Employee",back_populates='users', passive_deletes=True)
   steaks = relationship("Steaks", back_populates='users', passive_deletes=True)
   language = relationship("Language", back_populates='users', passive_deletes=True)
 

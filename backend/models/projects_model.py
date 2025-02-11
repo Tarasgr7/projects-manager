@@ -12,6 +12,5 @@ class Projects(Base):
     name = Column(String, unique=True, nullable=False)
     descriptions = Column(String, unique=True, nullable=False)
 
-    employee = relationship("Employee",back_populates='projects', passive_deletes=True)
     users=relationship("Users", back_populates="projects")
 

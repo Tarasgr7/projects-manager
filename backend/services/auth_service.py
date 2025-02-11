@@ -1,8 +1,7 @@
 import os
 import smtplib
 from datetime import datetime,timedelta
-from typing import Annotated
-
+from typing import Annotated 
 
 from ..models.users_models import Users
 
@@ -84,19 +83,18 @@ async def get_current_user(token:Annotated[str,Depends(oauth2_bearer)]):
       email=payload.get('sub')
       id=payload.get('id')
       role=payload.get('role')
-      projects=payload.get('projects')
       is_active=payload.get('status')
       if email is None or id is None :
          logger.error(f"Email: {email}, id : {id}, is_active : {is_active}")
          logger.warning("Invalid token payload")
          raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='Could not validate user')
-      return{'email':email, 'id':id,'role':role,'projects':projects}
+      return{'email':email, 'id':id,'role':role}
    except JWTError:
       raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='Token expired')
 
 def send_verification_email(email: str, token: str):
    template = email_templates_env.get_template("email_verify.html")
-   verification_link = f"http://0.0.0.0:80/auth/verify/{token}"
+   verification_link = f"http://127.0.0.1:8000/auth/verify/{token}"
    html_content = template.render(verification_link=verification_link)
    msg = EmailMessage()
    msg['Subject'] = "Email Verify"
