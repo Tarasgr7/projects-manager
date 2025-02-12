@@ -1,0 +1,25 @@
+SECRET_KEY="your_secret_key"
+ALGORITHM="HS256"
+
+
+
+EMAIL_ADDRESS = "your_email" 
+EMAIL_PASSWORD = "your_password"
+
+
+# Основна БД через локальну бд
+DB_USER=postgres
+DB_PASSWORD=admin
+DB_NAME=db
+DB_SERVER=localhost
+TEST_DB_NAME=test_db
+
+
+
+#Основна БД через докер
+DOCKER_USER=admin
+DOCKER_PASSWORD=admin
+DOCKER_NAME=postgres
+DOCKER_SERVER=postgres
+
+
