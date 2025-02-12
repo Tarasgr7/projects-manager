@@ -14,6 +14,8 @@ def check_user_tasks_by_user_id(user_id,db):
   return tasks
 
 def tasks_owner_or_pm(user,user_id,db):
+  if db == None:
+    raise_error("База даних не доступна", status.HTTP_500_INTERNAL_SERVER_ERROR)
   if user.get('role')!="Project Manager" and user.get("id")!=user_id:
     raise_error("You are not allowed to check tasks",status.HTTP_405_METHOD_NOT_ALLOWED)
 

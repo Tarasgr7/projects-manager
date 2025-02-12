@@ -7,19 +7,19 @@ from ..conftest import *
 from jose import jwt
 from fastapi import HTTPException
 
-app.dependency_overrides[get_db]=override_get_db
+app.dependency_overrides[get_db]=override_get_db()
 
-def test_authenticate_user(test_user):
+def test_authenticate_user(test_user_pm):
     db = TestingSessionLocal()
 
-    authenticated_user = authenticate_user(test_user.email, 'test', db)
+    authenticated_user = authenticate_user(test_user_pm.email, 'test', db)
     assert authenticated_user is not None
-    assert authenticated_user.email == test_user.email
+    assert authenticated_user.email == test_user_pm.email
 
     non_existent_user = authenticate_user('WrongUserName', 'test', db)
     assert non_existent_user is False
 
-    wrong_password_user = authenticate_user(test_user.email, 'wrongpassword', db)
+    wrong_password_user = authenticate_user(test_user_pm.email, 'wrongpassword', db)
     assert wrong_password_user is False
 
 def test_create_access_token():

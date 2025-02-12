@@ -22,6 +22,8 @@ class Users(Base):
   projects = relationship("Projects",back_populates='users', passive_deletes=True)
   steaks = relationship("Steaks", back_populates='users', passive_deletes=True)
   language = relationship("Language", back_populates='users', passive_deletes=True)
+  tasks_as_pm = relationship("Tasks", back_populates="pm", foreign_keys="[Tasks.pm_id]")  # Вказуємо tasks_as_pm
+  tasks_as_employee = relationship("Tasks", back_populates="employee", foreign_keys="[Tasks.employee_id]")  # Вказуємо tasks_as_employee # Вказуємо tasks_employee
 
 class Steaks(Base):
   __tablename__ = 'steaks'
