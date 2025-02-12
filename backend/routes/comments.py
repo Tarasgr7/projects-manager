@@ -30,7 +30,7 @@ async def get_comments_for_task(task_id: int, db: db_dependency, user: user_depe
     comments = comments_for_task(task_id, db)
     if not comments:
         raise_error("Коментарів для цієї задачі немає", status.HTTP_404_NOT_FOUND)
-    logger.info("Comments was successfully found")
+    logger.info("Коментар було успішно знайдено")
     return comments
 
 @router.delete('/delete_comments/{comment_id}',status_code=status.HTTP_200_OK)
