@@ -9,7 +9,7 @@ from ..services.projects_service import *
 from ..models.projects_model import Projects
 from ..services.tasks_service import have_unfulfilled_tasks
 from ..models.users_models import Users
-from ..schemas.project_schemas import ProjectSchema
+from ..schemas.project_schemas import ProjectSchema,ProjectsUpdateSchema
 from ..schemas.employee_schemas import EmployeeSchema
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -31,7 +31,7 @@ async def create_project(project: ProjectSchema, db: db_dependency, user: user_d
     return new_project
 
 @router.put("/update_projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def update_project(project_id: int, project: ProjectSchema, db: db_dependency, user: user_dependency):
+async def update_project(project_id: int, project: ProjectsUpdateSchema, db: db_dependency, user: user_dependency):
     check_user_pm(user)
     if not is_pm_for_project(project_id, user.get("id"), db):
         raise_error("Ви не є PM проекту", status.HTTP_403_FORBIDDEN)
@@ -40,7 +40,7 @@ async def update_project(project_id: int, project: ProjectSchema, db: db_depende
     if not project_in_db:
         raise_error("Проект не знайдено", status.HTTP_404_NOT_FOUND)
 
-    project_in_db.name, project_in_db.descriptions = project.name, project.description
+    project_in_db.name, project_in_db.descriptions,project_in_db.status = project.name, project.description, project.status
     db.commit()
     db.refresh(project_in_db)
 

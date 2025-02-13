@@ -17,23 +17,23 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger("service")
 
 # Якщо через докер
-def get_sync_db_url():
-    user = os.getenv("DOCKER_USER")
-    password = os.getenv("DOCKER_PASSWORD")
-    server=os.getenv("DOCKER_SERVER")
-    db = os.getenv("DOCKER_NAME")
-    logger.info(f"postgresql://{user}:{password}@{server}:5432/{db}")
-    return f"postgresql://{user}:{password}@{server}:5432/{db}"
+# def get_sync_db_url():
+#     user = os.getenv("DOCKER_USER")
+#     password = os.getenv("DOCKER_PASSWORD")
+#     server=os.getenv("DOCKER_SERVER")
+#     db = os.getenv("DOCKER_NAME")
+#     logger.info(f"postgresql://{user}:{password}@{server}:5432/{db}")
+#     return f"postgresql://{user}:{password}@{server}:5432/{db}"
 
 
 #Якщо через локальну БД
-# def get_sync_db_url():
-#     user = os.getenv("DB_USER")
-#     password = os.getenv("DB_PASSWORD")
-#     server=os.getenv("DB_SERVER")
-#     db = os.getenv("DB_NAME")
-#     logger.info(f"USERNAME:{user}")
-#     return f"postgresql://{user}:{password}@{server}:5432/{db}""
+def get_sync_db_url():
+    user = os.getenv("DB_USER")
+    password = os.getenv("DB_PASSWORD")
+    server=os.getenv("DB_SERVER")
+    db = os.getenv("DB_NAME")
+    logger.info(f"USERNAME:{user}")
+    return f"postgresql://{user}:{password}@{server}:5432/{db}"
 
 
 
